@@ -13,7 +13,7 @@ import {
 import viteLogo from '@images/vite.svg';
 import { Link } from 'react-router-dom';
 
-const useStyles = createStyles((theme) => ({
+const useStyles = createStyles(theme => ({
   wrapper: {
     height: 'calc(100vh - 60px - 32px)',
     display: 'grid',
@@ -32,26 +32,26 @@ function Home() {
 
   return (
     <AppShell
-      padding='md'
+      padding="md"
       navbar={
-        <Navbar width={{ base: 300 }} p='lg'>
+        <Navbar width={{ base: 300 }} p="lg">
           Nav Menu
         </Navbar>
       }
       header={
-        <Header height={60} p='lg' pr='64px' className={classes.header}>
+        <Header height={60} p="lg" pr="64px" className={classes.header}>
           <Text>Header</Text>
 
-          <Anchor to='/login' component={Link} ml='auto'>
+          <Anchor to="/login" component={Link} ml="auto">
             Logout
           </Anchor>
         </Header>
       }
-      styles={(theme) => ({ main: { backgroundColor: theme.colors.dark[8] } })}
+      styles={theme => ({ main: { backgroundColor: theme.colors.dark[8] } })}
     >
       <Paper className={classes.wrapper}>
-        <Image src={viteLogo} alt='logo' width={128} mb='md' />
-        <Title align='center'>Welcome back to HRME!</Title>
+        <Image src={viteLogo} alt="logo" width={128} mb="md" />
+        <Title align="center">Welcome back to HRME!</Title>
       </Paper>
     </AppShell>
   );
