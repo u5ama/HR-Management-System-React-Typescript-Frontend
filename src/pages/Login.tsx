@@ -11,15 +11,15 @@ import {
 } from '@mantine/core';
 
 import viteLogo from '@images/vite.svg';
+import splashImage from '@images/login-page-splash.jpg';
 import { useNavigate } from 'react-router-dom';
 
-const useStyles = createStyles(theme => ({
+const useStyles = createStyles(_theme => ({
   wrapper: {
     display: 'flex',
     height: '100vh',
     backgroundSize: 'cover',
-    backgroundImage:
-      'url(https://images.unsplash.com/photo-1667039596264-7424fa636a26?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1632&q=80)',
+    backgroundImage: `url(${splashImage})`,
   },
 
   form: {
@@ -32,7 +32,7 @@ const useStyles = createStyles(theme => ({
   },
 }));
 
-function Login() {
+function LoginPage() {
   const { classes } = useStyles();
 
   const navigate = useNavigate();
@@ -87,4 +87,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default LoginPage;
