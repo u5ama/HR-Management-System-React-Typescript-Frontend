@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import NotFound from '@pages/dashboard/404';
 import LoginPage from '@pages/login';
 import Dashboard from '@pages/dashboard';
 import DashboardHome from '@pages/dashboard/home';
 import DashboardStaff from '@pages/dashboard/staff';
-import NotFound from '@pages/dashboard/404';
+import DashboardAddStaff from '@pages/dashboard/staff/add';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />}>
           <Route path="home" element={<DashboardHome />} />
           <Route path="staff" element={<DashboardStaff />} />
+          <Route path="staff/add" element={<DashboardAddStaff />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 

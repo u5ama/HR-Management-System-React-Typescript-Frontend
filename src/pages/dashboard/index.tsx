@@ -30,6 +30,7 @@ function Dashboard() {
         main: {
           backgroundColor: theme.colors.dark[8],
           padding: 0,
+          overflowX: 'hidden',
         },
       })}
     >

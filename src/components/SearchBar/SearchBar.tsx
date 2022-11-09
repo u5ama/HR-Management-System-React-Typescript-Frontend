@@ -1,14 +1,7 @@
-import {
-  TextInput,
-  TextInputProps,
-  ActionIcon,
-  useMantineTheme,
-} from '@mantine/core';
-import { IconSearch, IconArrowRight, IconArrowLeft } from '@tabler/icons';
+import { TextInput, TextInputProps } from '@mantine/core';
+import { IconSearch } from '@tabler/icons';
 
 function SearchBar(props: TextInputProps) {
-  const theme = useMantineTheme();
-
   return (
     <TextInput
       icon={<IconSearch size={18} stroke={1.5} />}

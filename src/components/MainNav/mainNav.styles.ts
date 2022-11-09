@@ -2,7 +2,6 @@ import { createStyles } from '@mantine/core';
 
 const useStyles = createStyles((theme, _params, getRef) => {
   const icon = getRef('icon');
-  const a = getRef('a');
 
   const backgroundColor = theme.fn.variant({
     variant: 'filled',

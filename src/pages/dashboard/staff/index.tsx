@@ -6,21 +6,15 @@ import {
   Text,
   ActionIcon,
   Menu,
-  ScrollArea,
   Container,
   Title,
   Button,
-  useMantineTheme,
   Tooltip,
-  Stack,
   Select,
 } from '@mantine/core';
 import {
   IconPencil,
   IconMessages,
-  IconNote,
-  IconReportAnalytics,
-  IconTrash,
   IconDots,
   IconFiles,
   IconUser,
@@ -30,11 +24,10 @@ import {
   IconUserPlus,
   IconUsers,
 } from '@tabler/icons';
+import { Link } from 'react-router-dom';
 import staff from './staff.json';
 
 function DashboardStaff() {
-  const theme = useMantineTheme();
-
   const Rows = staff.data.map(item => (
     <tr key={item.name}>
       <td>
@@ -116,9 +109,11 @@ function DashboardStaff() {
         <Group spacing="sm">
           <SearchBar sx={{ flexGrow: 1 }} />
 
-          <Button size="md" leftIcon={<IconUserPlus size={20} />}>
-            Add Staff
-          </Button>
+          <Link to="add">
+            <Button size="md" leftIcon={<IconUserPlus size={20} />}>
+              Add Staff
+            </Button>
+          </Link>
 
           <Button size="md" leftIcon={<IconUsers size={20} />} variant="light">
             Bulk Add

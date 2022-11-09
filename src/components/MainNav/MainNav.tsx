@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Navbar, Group, Image, Text } from '@mantine/core';
 import {
   IconLogout,
@@ -11,7 +10,7 @@ import {
   IconReportAnalytics,
   IconSettings,
 } from '@tabler/icons';
-import { Link } from 'react-router-dom';
+import { Link, useHref, useLocation } from 'react-router-dom';
 import viteLogo from '@images/vite.svg';
 import useStyles from './mainNav.styles';
 
@@ -29,7 +28,8 @@ export const navbarWidth = 300;
 
 function MainNav() {
   const { classes, cx } = useStyles();
-  const [active, setActive] = useState('');
+
+  const location = useLocation();
 
   return (
     <Navbar width={{ sm: 300 }} p="md" className={classes.navbar}>
@@ -46,11 +46,13 @@ function MainNav() {
         {linksData.map(item => (
           <Link
             className={cx(classes.link, {
-              [classes.linkActive]: item.label === active,
+              [classes.linkActive]: location.pathname.startsWith(
+                // eslint-disable-next-line react-hooks/rules-of-hooks
+                useHref(item.link)
+              ),
             })}
             to={item.link}
             key={item.label}
-            onClick={() => setActive(item.label)}
           >
             <item.icon className={classes.linkIcon} stroke={1.5} />
             <span>{item.label}</span>
