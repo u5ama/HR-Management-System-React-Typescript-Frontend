@@ -5,6 +5,7 @@ import Dashboard from '@pages/dashboard';
 import DashboardHome from '@pages/dashboard/home';
 import DashboardStaff from '@pages/dashboard/staff';
 import DashboardAddStaff from '@pages/dashboard/staff/add';
+import DashboardEmployee from '@pages/dashboard/staff/[id]';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />}>
           <Route path="home" element={<DashboardHome />} />
           <Route path="staff" element={<DashboardStaff />} />
+          <Route path="staff/:id" element={<DashboardEmployee />} />
           <Route path="staff/add" element={<DashboardAddStaff />} />
           <Route path="*" element={<NotFound />} />
         </Route>

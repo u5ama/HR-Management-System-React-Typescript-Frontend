@@ -53,6 +53,7 @@ function DashboardAddStaff() {
 
             <Grid.Col span={6}>
               <TextInput
+                type="email"
                 label="Email"
                 placeholder="hello@example.com"
                 withAsterisk
@@ -61,7 +62,7 @@ function DashboardAddStaff() {
             <Grid.Col span={6}>
               <TextInput
                 label="Phone Number"
-                placeholder="+1 234 567"
+                placeholder="+1 (234) 567 89"
                 withAsterisk
               />
             </Grid.Col>

@@ -31,17 +31,19 @@ function DashboardStaff() {
   const Rows = staff.data.map(item => (
     <tr key={item.name}>
       <td>
-        <Group spacing="sm">
-          <Avatar size={40} src={item.avatar} radius={40} />
-          <div>
-            <Text size="sm" weight={500}>
-              {item.name}
-            </Text>
-            <Text color="dimmed" size="xs">
-              {item.job}
-            </Text>
-          </div>
-        </Group>
+        <Link to="1" style={{ textDecoration: 'none', color: 'white' }}>
+          <Group spacing="sm">
+            <Avatar size={40} src={item.avatar} radius={40} />
+            <div>
+              <Text size="sm" weight={500}>
+                {item.name}
+              </Text>
+              <Text color="dimmed" size="xs">
+                {item.job}
+              </Text>
+            </div>
+          </Group>
+        </Link>
       </td>
 
       <td>
@@ -75,9 +77,11 @@ function DashboardStaff() {
             </Menu.Target>
 
             <Menu.Dropdown>
-              <Menu.Item icon={<IconPencil size={16} />}>
-                Edit Details
-              </Menu.Item>
+              <Link to="1" style={{ textDecoration: 'none' }}>
+                <Menu.Item icon={<IconPencil size={16} />}>
+                  Edit Details
+                </Menu.Item>
+              </Link>
               <Menu.Item icon={<IconMessages size={16} />}>
                 Send message
               </Menu.Item>
