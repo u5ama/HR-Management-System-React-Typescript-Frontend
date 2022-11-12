@@ -1,4 +1,4 @@
-import { Navbar, Group, Image, Text } from '@mantine/core';
+import { Navbar, Group, Image, Text, Box } from '@mantine/core';
 import {
   IconLogout,
   IconChecklist,
@@ -13,6 +13,8 @@ import {
 import { Link, useHref, useLocation } from 'react-router-dom';
 import viteLogo from '@images/vite.svg';
 import useStyles from './mainNav.styles';
+import { useCallback, useContext } from 'react';
+import { AuthContext } from 'src/App';
 
 const linksData = [
   { link: 'tasks', label: 'Task Center', icon: IconChecklist },
@@ -28,8 +30,13 @@ export const navbarWidth = 300;
 
 function MainNav() {
   const { classes, cx } = useStyles();
+  const { setUser } = useContext(AuthContext)!;
 
   const location = useLocation();
+
+  const logoutHandler = useCallback(() => {
+    setUser(null);
+  }, [setUser]);
 
   return (
     <Navbar width={{ sm: 300 }} p="md" className={classes.navbar}>
@@ -66,10 +73,10 @@ function MainNav() {
           <span>Settings</span>
         </Link>
 
-        <Link to="/login" className={classes.link}>
+        <Box onClick={logoutHandler} className={classes.link}>
           <IconLogout className={classes.linkIcon} stroke={1.5} />
           <span>Logout</span>
-        </Link>
+        </Box>
       </Navbar.Section>
     </Navbar>
   );

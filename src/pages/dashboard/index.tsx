@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Paper, createStyles, AppShell } from '@mantine/core';
 import MainNav, { navbarWidth } from '@components/MainNav/MainNav';
+import useAuthUser from '@hooks/useAuthUser';
 
 const useStyles = createStyles(_theme => {
   return {
@@ -18,9 +19,13 @@ function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const user = useAuthUser();
+
   useEffect(() => {
+    if (!user) navigate('/login', { replace: true });
+
     if (location.pathname === '/dashboard') navigate('home');
-  }, [location.pathname, navigate]);
+  }, [location.pathname, navigate, user]);
 
   return (
     <AppShell
