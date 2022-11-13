@@ -74,9 +74,9 @@ function LoginPage() {
       else {
         setError(null);
 
-        localStorage.setItem('user', JSON.stringify(response.data));
+        localStorage.setItem('user', JSON.stringify(response.data.data));
 
-        setUser(response.data);
+        setUser(response.data.data);
       }
       setLoading(false);
     },

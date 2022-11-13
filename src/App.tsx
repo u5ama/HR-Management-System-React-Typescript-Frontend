@@ -6,9 +6,10 @@ import DashboardHome from '@pages/dashboard/home';
 import DashboardStaff from '@pages/dashboard/staff';
 import DashboardAddStaff from '@pages/dashboard/staff/add';
 import DashboardEmployee from '@pages/dashboard/staff/[id]';
-import { createContext } from 'react';
+import { createContext, useEffect } from 'react';
 import { IUser } from '@app-types/user';
 import { useLocalStorage } from '@mantine/hooks';
+import axios from 'axios';
 
 export const AuthContext = createContext<{
   user: IUser | null;
@@ -20,6 +21,21 @@ function App() {
     key: 'user',
     defaultValue: null,
   });
+
+  useEffect(() => {
+    axios.interceptors.response.use(
+      function (response) {
+        return response;
+      },
+      function (error) {
+        if (error.response.data.message === 'Token is Expired') {
+          return setUser(null);
+        }
+
+        return Promise.reject(error);
+      }
+    );
+  }, [setUser]);
 
   return (
     <AuthContext.Provider value={{ user, setUser }}>

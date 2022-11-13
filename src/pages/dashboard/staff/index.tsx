@@ -1,4 +1,5 @@
 import SearchBar from '@components/SearchBar/SearchBar';
+import useAuthUser from '@hooks/useAuthUser';
 import {
   Avatar,
   Table,
@@ -11,6 +12,8 @@ import {
   Button,
   Tooltip,
   Select,
+  Loader,
+  Center,
 } from '@mantine/core';
 import {
   IconPencil,
@@ -24,22 +27,63 @@ import {
   IconUserPlus,
   IconUsers,
 } from '@tabler/icons';
+import axios from 'axios';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import staff from './staff.json';
 
 function DashboardStaff() {
-  const Rows = staff.data.map(item => (
-    <tr key={item.name}>
+  const [loading, setLoading] = useState(true);
+  // const [error, setError] = useState<string | boolean>(false);
+  const [staff, setStaff] = useState<any[]>([]);
+  const user = useAuthUser()!;
+
+  useEffect(() => {
+    fetchStaff();
+
+    async function fetchStaff() {
+      setLoading(true);
+
+      const response = await axios.get(`/company/staff?company_id=${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+
+      setStaff(response.data.data);
+      setLoading(false);
+    }
+  }, [user?.id, user?.token]);
+
+  // const deleteStaffHandler = useCallback(
+  //   async (id: number) => {
+  //     await axios.delete(`/company/staff/${id}`, {
+  //       headers: {
+  //         Authorization: `Bearer ${user?.token}`,
+  //       },
+  //     });
+  //   },
+  //   [user?.token]
+  // );
+
+  const Rows = staff.map(item => (
+    <tr key={item.id}>
       <td>
-        <Link to="1" style={{ textDecoration: 'none', color: 'white' }}>
+        <Link
+          to={`${item.id}`}
+          style={{ textDecoration: 'none', color: 'white' }}
+        >
           <Group spacing="sm">
-            <Avatar size={40} src={item.avatar} radius={40} />
+            <Avatar size={40} radius={40} color="indigo">
+              {item.first_name.charAt(0).toUpperCase()}
+              {item.last_name.charAt(0).toUpperCase()}
+            </Avatar>
+
             <div>
               <Text size="sm" weight={500}>
-                {item.name}
+                {item.first_name} {item.last_name}
               </Text>
               <Text color="dimmed" size="xs">
-                {item.job}
+                {item.type_of_worker}
               </Text>
             </div>
           </Group>
@@ -53,7 +97,7 @@ function DashboardStaff() {
         </Text>
       </td>
       <td>
-        <Text size="sm">${item.rate.toFixed(1)} / hr</Text>
+        <Text size="sm">${item.pay_rate_amount} / hr</Text>
         <Text size="xs" color="dimmed">
           Rate
         </Text>
@@ -77,7 +121,7 @@ function DashboardStaff() {
             </Menu.Target>
 
             <Menu.Dropdown>
-              <Link to="1" style={{ textDecoration: 'none' }}>
+              <Link to={`${item.id}`} style={{ textDecoration: 'none' }}>
                 <Menu.Item icon={<IconPencil size={16} />}>
                   Edit Details
                 </Menu.Item>
@@ -185,9 +229,15 @@ function DashboardStaff() {
 
       <Container size="lg" mt="xl">
         <Title order={2}>Staff List</Title>
-        <Table sx={{ minWidth: 800 }} verticalSpacing="md">
-          <tbody>{Rows}</tbody>
-        </Table>
+        {loading ? (
+          <Center mt="xl">
+            <Loader />
+          </Center>
+        ) : (
+          <Table sx={{ minWidth: 800 }} verticalSpacing="md">
+            <tbody>{Rows}</tbody>
+          </Table>
+        )}
       </Container>
     </Container>
   );
