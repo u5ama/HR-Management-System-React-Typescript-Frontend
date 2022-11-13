@@ -1,4 +1,5 @@
-import { Navbar, Group, Image, Text, Box } from '@mantine/core';
+import { useCallback, useContext, useState } from 'react';
+import { Navbar, Group, Image, Text, Box, Loader } from '@mantine/core';
 import {
   IconLogout,
   IconChecklist,
@@ -13,8 +14,7 @@ import {
 import { Link, useHref, useLocation } from 'react-router-dom';
 import viteLogo from '@images/vite.svg';
 import useStyles from './mainNav.styles';
-import { useCallback, useContext } from 'react';
-import { AuthContext } from 'src/App';
+import AuthContext from '@contexts/auth';
 
 const linksData = [
   { link: 'tasks', label: 'Task Center', icon: IconChecklist },
@@ -30,13 +30,19 @@ export const navbarWidth = 300;
 
 function MainNav() {
   const { classes, cx } = useStyles();
-  const { setUser } = useContext(AuthContext)!;
+  const { logout } = useContext(AuthContext)!;
 
   const location = useLocation();
 
-  const logoutHandler = useCallback(() => {
-    setUser(null);
-  }, [setUser]);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const logoutHandler = useCallback(async () => {
+    setLoggingOut(true);
+
+    await logout();
+
+    setLoggingOut(false);
+  }, [logout]);
 
   return (
     <Navbar width={{ sm: 300 }} p="md" className={classes.navbar}>
@@ -73,8 +79,18 @@ function MainNav() {
           <span>Settings</span>
         </Link>
 
-        <Box onClick={logoutHandler} className={classes.link}>
-          <IconLogout className={classes.linkIcon} stroke={1.5} />
+        <Box
+          onClick={logoutHandler}
+          className={cx(classes.link, {
+            [classes.linkActive]: loggingOut,
+            [classes.disabled]: loggingOut,
+          })}
+        >
+          {loggingOut ? (
+            <Loader color="white" size="sm" mr="sm" />
+          ) : (
+            <IconLogout className={classes.linkIcon} stroke={1.5} />
+          )}
           <span>Logout</span>
         </Box>
       </Navbar.Section>

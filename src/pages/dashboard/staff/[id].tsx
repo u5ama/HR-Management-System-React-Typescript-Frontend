@@ -1,7 +1,6 @@
 import qs from 'qs';
 import {
   Avatar,
-  Group,
   Text,
   ActionIcon,
   Container,
@@ -11,8 +10,6 @@ import {
   Grid,
   Stack,
   Tabs,
-  TextInput,
-  Center,
   Loader,
 } from '@mantine/core';
 import {
@@ -26,71 +23,42 @@ import {
   IconUserCircle,
   IconSearch,
   IconFilePlus,
-  IconAddressBook,
-  IconHierarchy3,
-  IconHierarchy,
+  IconX,
 } from '@tabler/icons';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import useAuthUser from '@hooks/useAuthUser';
-import axios from 'axios';
-import { z } from 'zod';
-import { useForm, zodResolver } from '@mantine/form';
+import { useAuthHeader } from '@hooks/useAuth';
 import NotesTab from '@components/NotesTab/NotesTab';
+import axiosClient from '@lib/axios';
+import { useQuery } from '@tanstack/react-query';
+import { IResponse } from '@app-types/api';
+import { Staff } from '@app-types/staff';
+import { showNotification } from '@mantine/notifications';
+import SettingsTab from '@components/SettingsTab/SettingsTab';
 
 function DashboardEmployee() {
   const navigate = useNavigate();
   const { tab } = qs.parse(useLocation().search.replace('?', ''));
   const { id } = useParams();
-  const [staff, setStaff] = useState<any | null>(null);
-  const user = useAuthUser()!;
-  const [loading, setLoading] = useState(true);
+  const authHeader = useAuthHeader();
 
-  const contactFormSchema = z.object({
-    name: z
-      .string()
-      .min(2, { message: 'Name should be at least 2 characters long' }),
-    relationship: z.string().optional(),
-    phone_number: z.string().optional(),
-    email: z.string().email().optional(),
+  const { isLoading, error, data } = useQuery(['staff', id], async () => {
+    const response = await axiosClient.post<IResponse<Staff>>(
+      '/company/showStaff',
+      { id },
+      { headers: authHeader }
+    );
+
+    return response.data;
   });
 
-  // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-  const _contactForm = useForm({
-    initialValues: {
-      name: '',
-      relationship: '',
-      phone_number: '',
-      email: '',
-    },
-    validate: zodResolver(contactFormSchema),
-  });
-
-  // const addContactHandler = () => {};
-
-  useEffect(() => {
-    fetchStaff();
-
-    async function fetchStaff() {
-      setLoading(true);
-
-      const response = await axios.post(
-        '/company/showStaff',
-        { id },
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
-
-      setStaff(response.data.data);
-
-      setLoading(false);
-    }
-  }, [id, user?.token]);
-
-  // console.log(staff);
+  if (error) {
+    showNotification({
+      title: 'Oops!',
+      message: 'Something went wrong',
+      icon: <IconX size={18} />,
+      color: 'red',
+    });
+  }
 
   return (
     <Container fluid px={48} py="xl" pb="96px">
@@ -102,13 +70,16 @@ function DashboardEmployee() {
         </Link>
       </Anchor>
 
-      {loading ? (
-        <Center mt="xl">
+      {isLoading ? (
+        <Stack mt="xl" align="center">
           <Loader />
-        </Center>
+          <Text>Loading...</Text>
+        </Stack>
       ) : (
         <Container mt="xl" size="xl">
-          <Title order={1}>John Doe</Title>
+          <Title order={1}>
+            {data?.data?.first_name} {data?.data?.last_name}
+          </Title>
 
           <Grid mt="lg" gutter="xl">
             <Grid.Col span={3}>
@@ -123,13 +94,15 @@ function DashboardEmployee() {
                   align="center"
                 >
                   <Avatar color="indigo" radius={100} size={120} mb="xs">
-                    {staff.first_name.charAt(0).toUpperCase()}
-                    {staff.last_name.charAt(0).toUpperCase()}
+                    {data?.data?.first_name?.charAt(0).toUpperCase()}
+                    {data?.data?.last_name?.charAt(0).toUpperCase()}
                   </Avatar>
                   <Title order={3}>
-                    {staff.first_name} {staff.last_name}
+                    {data?.data?.first_name} {data?.data?.last_name}
                   </Title>
-                  <Text transform="capitalize">{staff.type_of_worker}</Text>
+                  <Text transform="capitalize">
+                    {data?.data?.type_of_worker}
+                  </Text>
                 </Stack>
 
                 <Button leftIcon={<IconUserCheck />} size="md" fullWidth>
@@ -213,7 +186,7 @@ function DashboardEmployee() {
                 </Tabs.Panel>
 
                 <Tabs.Panel value="notes" pt="xl">
-                  <NotesTab />
+                  <NotesTab staffId={id!} />
                 </Tabs.Panel>
 
                 <Tabs.Panel value="profile" pt="xl">
@@ -225,119 +198,7 @@ function DashboardEmployee() {
                 </Tabs.Panel>
 
                 <Tabs.Panel value="settings" pt="xl">
-                  <Stack spacing="md">
-                    <Stack
-                      align="flex-start"
-                      p="xl"
-                      sx={theme => ({
-                        backgroundColor: theme.colors.dark[6],
-                        borderRadius: theme.radius.md,
-                      })}
-                    >
-                      <Group>
-                        <IconAddressBook size={32} stroke={1.5} />
-
-                        <Title order={3}>Emergency Contact Information</Title>
-                      </Group>
-
-                      <Grid>
-                        <Grid.Col span={6}>
-                          <TextInput label="Name" placeholder="John Doe" />
-                        </Grid.Col>
-
-                        <Grid.Col span={6}>
-                          <TextInput
-                            label="Phone Number"
-                            placeholder="+1 (234) 567 89"
-                          />
-                        </Grid.Col>
-
-                        <Grid.Col span={6}>
-                          <TextInput
-                            label="Relationship"
-                            placeholder="Mother"
-                          />
-                        </Grid.Col>
-
-                        <Grid.Col span={6}>
-                          <TextInput
-                            type="email"
-                            label="Email"
-                            placeholder="example@email.com"
-                          />
-                        </Grid.Col>
-                      </Grid>
-
-                      <Button size="md">Save</Button>
-                    </Stack>
-
-                    <Stack
-                      align="flex-start"
-                      p="xl"
-                      sx={theme => ({
-                        backgroundColor: theme.colors.dark[6],
-                        borderRadius: theme.radius.md,
-                      })}
-                    >
-                      <Group>
-                        <IconHierarchy3 size={32} stroke={1.5} />
-
-                        <Title order={3}>Make John a Manager</Title>
-                      </Group>
-
-                      <Text>
-                        The Manager role allows the user to create performance
-                        plans, written warnings, verbal warnings and document
-                        incidents for their direct reports.
-                      </Text>
-
-                      <Button size="md" variant="light">
-                        Make Manager
-                      </Button>
-                    </Stack>
-
-                    <Stack
-                      align="flex-start"
-                      p="xl"
-                      sx={theme => ({
-                        backgroundColor: theme.colors.dark[6],
-                        borderRadius: theme.radius.md,
-                      })}
-                    >
-                      <Group>
-                        <IconHierarchy size={32} stroke={1.5} />
-
-                        <Title order={3}>John Reports To</Title>
-                      </Group>
-
-                      <Text>Jenn Doe</Text>
-
-                      <Button size="md" variant="light">
-                        Reassign Manager
-                      </Button>
-                    </Stack>
-
-                    <Stack
-                      align="flex-start"
-                      p="xl"
-                      sx={theme => ({
-                        backgroundColor: theme.colors.dark[6],
-                        borderRadius: theme.radius.md,
-                      })}
-                    >
-                      <Group>
-                        <IconUserX size={32} stroke={1.5} />
-
-                        <Title order={3}>Account Status</Title>
-                      </Group>
-
-                      <Text>Active</Text>
-
-                      <Button size="md" color="red" variant="light">
-                        Begin Resignation/Termination
-                      </Button>
-                    </Stack>
-                  </Stack>
+                  <SettingsTab />
                 </Tabs.Panel>
               </Tabs>
             </Grid.Col>

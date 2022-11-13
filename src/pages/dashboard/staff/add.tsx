@@ -1,4 +1,5 @@
-import useAuthUser from '@hooks/useAuthUser';
+import useAuth, { useAuthHeader } from '@hooks/useAuth';
+import axiosClient from '@lib/axios';
 import {
   Text,
   Container,
@@ -27,15 +28,15 @@ import {
   IconCheck,
   IconX,
 } from '@tabler/icons';
-import axios from 'axios';
-import { useCallback, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { z } from 'zod';
 
 function DashboardAddStaff() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | boolean>(false);
-  const user = useAuthUser();
+  const { user } = useAuth();
+  const authHeader = useAuthHeader();
+  const queryClient = useQueryClient();
 
   const formSchema = z.object({
     company_id: z.number(),
@@ -85,58 +86,42 @@ function DashboardAddStaff() {
       zip_code: '',
     },
     validate: zodResolver(formSchema),
-    // transformValues: values => ({
-    //   ...values,
-    //   pay_rate_amount: Number(values.pay_rate_amount),
-    // }),
   });
 
-  const formSubmitHandler = useCallback(
+  const staffMutation = useMutation(
     async (values: typeof form.values) => {
-      setLoading(true);
-      setError(false);
+      await axiosClient.post('/company/staff', values, { headers: authHeader });
+    },
+    {
+      onSuccess() {
+        form.reset();
 
-      console.log(values);
-
-      try {
-        const response = await axios.post('/company/staff', values, {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
+        showNotification({
+          title: 'Success',
+          message: 'Staff successfully added',
+          icon: <IconCheck size={18} />,
+          color: 'teal',
         });
-        if (!response.data.success)
-          showNotification({
-            title: 'Oops!',
-            message: 'Something went wrong',
-            icon: <IconX size={18} />,
-            color: 'red',
-          });
-        else {
-          setError(false);
-
-          form.reset();
-
-          showNotification({
-            title: 'Success',
-            message: 'Staff successfully added',
-            icon: <IconCheck size={18} />,
-            color: 'teal',
-          });
-        }
-      } catch (error) {
-        console.log(error);
-
+      },
+      onError() {
         showNotification({
           title: 'Oops!',
           message: 'Something went wrong',
           icon: <IconX size={18} />,
           color: 'red',
         });
-      }
+      },
+      onSettled() {
+        queryClient.invalidateQueries(['staff', user?.id]);
+      },
+    }
+  );
 
-      setLoading(false);
+  const formSubmitHandler = useCallback(
+    async (values: typeof form.values) => {
+      staffMutation.mutate(values);
     },
-    [form, user?.token]
+    [form, staffMutation]
   );
 
   return (
@@ -154,7 +139,6 @@ function DashboardAddStaff() {
           onSubmit={form.onSubmit(formSubmitHandler, (errors, values) => {
             console.log(errors);
             console.log(values);
-            setError(true);
           })}
         >
           <Title>Add Staff</Title>
@@ -387,11 +371,9 @@ function DashboardAddStaff() {
           </Box>
 
           <Stack mt="lg" spacing="xs">
-            {error && (
+            {form.isTouched() && !form.isValid() && (
               <Text color="red">
-                {typeof error === 'boolean'
-                  ? 'Please fix the issues above and try again.'
-                  : error}
+                Please fix the issues above and try again.
               </Text>
             )}
 
@@ -400,7 +382,7 @@ function DashboardAddStaff() {
                 size="lg"
                 leftIcon={<IconUserPlus size={22} />}
                 type="submit"
-                loading={loading}
+                loading={staffMutation.isLoading}
               >
                 Add Staff
               </Button>

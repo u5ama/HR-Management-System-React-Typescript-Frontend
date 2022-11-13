@@ -1,61 +1,110 @@
-import { Stack, Title, Button } from '@mantine/core';
+import { IResponse } from '@app-types/api';
+import { IStaffNote } from '@app-types/staff';
+import { ModalMode } from '@app-types/utils';
+import { useAuthHeader } from '@hooks/useAuth';
+import axiosClient from '@lib/axios';
+import { Stack, Title, Button, Group, Loader, Text } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import { IconPencil } from '@tabler/icons';
+import { useQuery } from '@tanstack/react-query';
+import { useCallback, useState } from 'react';
+import Note from './Note';
+import NoteModal from './NoteModal';
+interface Props {
+  staffId: string;
+}
 
-function NotesTab() {
-  // const [notes, setNotes] = useState<any[]>([]);
-  // const [loading, setLoading] = useState(true);
-  // const user = useAuthUser()!;
+function NotesTab({ staffId }: Props) {
+  const authHeader = useAuthHeader();
+  const [selectedNote, setSelectedNote] = useState<IStaffNote>();
+  const [mode, setMode] = useState<ModalMode>();
 
-  // const fetchNotes = useCallback(async () => {
-  //   setLoading(true);
+  const [opened, handlers] = useDisclosure(false);
 
-  //   const response = await axios.post(
-  //     '/company/staff_notes',
-  //     { staff_id: userId },
-  //     {
-  //       headers: {
-  //         Authorization: `Bearer ${user?.token}`,
-  //       },
-  //     }
-  //   );
+  const { isLoading, data } = useQuery(['notes', staffId], async () => {
+    const response = await axiosClient.get<IResponse<IStaffNote[]>>(
+      `/company/staff_notes?staff_id=${staffId}`,
+      { headers: authHeader }
+    );
 
-  //   console.log(response.data.data);
+    return response.data;
+  });
 
-  //   setNotes(response.data.data);
+  const editNoteHandler = useCallback(
+    (note: IStaffNote) => {
+      setSelectedNote(note);
+      handlers.open();
+      setMode('edit');
+    },
+    [handlers]
+  );
 
-  //   setLoading(false);
-  // }, [user?.token, userId]);
+  const viewNoteHandler = useCallback(
+    (note: IStaffNote) => {
+      setSelectedNote(note);
+      handlers.open();
+      setMode('view');
+    },
+    [handlers]
+  );
 
-  // useEffect(() => {
-  //   fetchNotes();
-  // }, [fetchNotes]);
+  const closeModalHandler = useCallback(() => {
+    setSelectedNote(undefined);
+    handlers.close();
+    setMode('add');
+  }, [handlers]);
+
+  if (isLoading)
+    return (
+      <Stack align="center" mt="xl">
+        <Loader />
+        <Text>Loading...</Text>
+      </Stack>
+    );
 
   return (
-    <Stack mt={32} align="center">
-      {/* {loading || !notes ? (
-        <Center>
-          <Loader />
-        </Center>
-      ) : notes.length === 0 ? (
-        <Title order={3} size="h2">
-          No Notes Added Yet
-        </Title>
+    <>
+      <NoteModal
+        note={selectedNote}
+        opened={opened}
+        onClose={closeModalHandler}
+        mode={mode}
+      />
+
+      {data?.data?.length === 0 ? (
+        <Stack mt={32} align="center">
+          <Title order={3} size="h2">
+            No Notes Added Yet
+          </Title>
+
+          <Button
+            leftIcon={<IconPencil />}
+            size="md"
+            variant="light"
+            onClick={handlers.open}
+          >
+            Add Note
+          </Button>
+        </Stack>
       ) : (
-        notes.map(n => (
-          <Box>
-            <pre>{n}</pre>
-          </Box>
-        ))
-      )} */}
+        <Stack align="start">
+          <Button leftIcon={<IconPencil />} size="md" onClick={handlers.open}>
+            Add Note
+          </Button>
 
-      <Title order={3} size="h2">
-        No Notes Added Yet
-      </Title>
-
-      <Button leftIcon={<IconPencil />} size="md" variant="light">
-        Add Note
-      </Button>
-    </Stack>
+          <Group>
+            {data?.data?.map(n => (
+              <Note
+                key={n.id}
+                note={n}
+                onView={() => viewNoteHandler(n)}
+                onEdit={() => editNoteHandler(n)}
+              />
+            ))}
+          </Group>
+        </Stack>
+      )}
+    </>
   );
 }
 

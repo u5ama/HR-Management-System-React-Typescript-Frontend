@@ -1,5 +1,8 @@
 import SearchBar from '@components/SearchBar/SearchBar';
-import useAuthUser from '@hooks/useAuthUser';
+import useAuth, { useAuthHeader } from '@hooks/useAuth';
+import axiosClient from '@lib/axios';
+import { useQuery } from '@tanstack/react-query';
+
 import {
   Avatar,
   Table,
@@ -13,7 +16,7 @@ import {
   Tooltip,
   Select,
   Loader,
-  Center,
+  Stack,
 } from '@mantine/core';
 import {
   IconPencil,
@@ -26,128 +29,125 @@ import {
   IconMessage,
   IconUserPlus,
   IconUsers,
+  IconX,
 } from '@tabler/icons';
-import axios from 'axios';
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { IResponse } from '@app-types/api';
+import { Staff } from '@app-types/staff';
+import { showNotification } from '@mantine/notifications';
 
 function DashboardStaff() {
-  const [loading, setLoading] = useState(true);
-  // const [error, setError] = useState<string | boolean>(false);
-  const [staff, setStaff] = useState<any[]>([]);
-  const user = useAuthUser()!;
+  const { user } = useAuth()!;
+  const authHeader = useAuthHeader();
 
-  useEffect(() => {
-    fetchStaff();
+  const { isLoading, error, data, isSuccess } = useQuery(
+    ['staff', user?.id],
+    async () => {
+      const response = await axiosClient.get<IResponse<Staff[]>>(
+        `/company/staff?company_id=${user?.id}`,
+        { headers: authHeader }
+      );
 
-    async function fetchStaff() {
-      setLoading(true);
-
-      const response = await axios.get(`/company/staff?company_id=${user.id}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
-
-      setStaff(response.data.data);
-      setLoading(false);
+      return response.data;
     }
-  }, [user?.id, user?.token]);
+  );
 
-  // const deleteStaffHandler = useCallback(
-  //   async (id: number) => {
-  //     await axios.delete(`/company/staff/${id}`, {
-  //       headers: {
-  //         Authorization: `Bearer ${user?.token}`,
-  //       },
-  //     });
-  //   },
-  //   [user?.token]
-  // );
+  if (error) {
+    showNotification({
+      title: 'Oops!',
+      message: 'Something went wrong',
+      icon: <IconX size={18} />,
+      color: 'red',
+    });
+  }
 
-  const Rows = staff.map(item => (
-    <tr key={item.id}>
-      <td>
-        <Link
-          to={`${item.id}`}
-          style={{ textDecoration: 'none', color: 'white' }}
-        >
-          <Group spacing="sm">
-            <Avatar size={40} radius={40} color="indigo">
-              {item.first_name.charAt(0).toUpperCase()}
-              {item.last_name.charAt(0).toUpperCase()}
-            </Avatar>
+  const Rows = !isSuccess
+    ? null
+    : data.data?.map(item => (
+        <tr key={item.id}>
+          <td>
+            <Link
+              to={`${item.id}`}
+              style={{ textDecoration: 'none', color: 'white' }}
+            >
+              <Group spacing="sm">
+                <Avatar size={40} radius={40} color="indigo">
+                  {item.first_name?.charAt(0).toUpperCase()}
+                  {item.last_name?.charAt(0).toUpperCase()}
+                </Avatar>
 
-            <div>
-              <Text size="sm" weight={500}>
-                {item.first_name} {item.last_name}
-              </Text>
-              <Text color="dimmed" size="xs">
-                {item.type_of_worker}
-              </Text>
-            </div>
-          </Group>
-        </Link>
-      </td>
+                <div>
+                  <Text size="sm" weight={500}>
+                    {item.first_name} {item.last_name}
+                  </Text>
+                  <Text color="dimmed" size="xs">
+                    {item.type_of_worker}
+                  </Text>
+                </div>
+              </Group>
+            </Link>
+          </td>
 
-      <td>
-        <Text size="sm">{item.email}</Text>
-        <Text size="xs" color="dimmed">
-          Email
-        </Text>
-      </td>
-      <td>
-        <Text size="sm">${item.pay_rate_amount} / hr</Text>
-        <Text size="xs" color="dimmed">
-          Rate
-        </Text>
-      </td>
+          <td>
+            <Text size="sm">{item.email}</Text>
+            <Text size="xs" color="dimmed">
+              Email
+            </Text>
+          </td>
+          <td>
+            <Text size="sm">${item.pay_rate_amount} / hr</Text>
+            <Text size="xs" color="dimmed">
+              Rate
+            </Text>
+          </td>
 
-      <td>
-        <Group spacing="sm" position="right">
-          <Tooltip label="Message Staff" position="left" withArrow>
-            <ActionIcon>
-              <IconMessage size={24} stroke={1.5} />
-            </ActionIcon>
-          </Tooltip>
-
-          <Menu transition="pop" withArrow position="bottom-end">
-            <Menu.Target>
-              <Tooltip label="More Actions" position="right" withArrow>
+          <td>
+            <Group spacing="sm" position="right">
+              <Tooltip label="Message Staff" position="left" withArrow>
                 <ActionIcon>
-                  <IconDots size={24} stroke={1.5} />
+                  <IconMessage size={24} stroke={1.5} />
                 </ActionIcon>
               </Tooltip>
-            </Menu.Target>
 
-            <Menu.Dropdown>
-              <Link to={`${item.id}`} style={{ textDecoration: 'none' }}>
-                <Menu.Item icon={<IconPencil size={16} />}>
-                  Edit Details
-                </Menu.Item>
-              </Link>
-              <Menu.Item icon={<IconMessages size={16} />}>
-                Send message
-              </Menu.Item>
-              <Menu.Item icon={<IconFiles size={16} />}>
-                View Documents
-              </Menu.Item>
-              <Menu.Item icon={<IconUser size={16} />}>Edit Profile</Menu.Item>
+              <Menu transition="pop" withArrow position="bottom-end">
+                <Menu.Target>
+                  <Tooltip label="More Actions" position="right" withArrow>
+                    <ActionIcon>
+                      <IconDots size={24} stroke={1.5} />
+                    </ActionIcon>
+                  </Tooltip>
+                </Menu.Target>
 
-              <Menu.Divider />
+                <Menu.Dropdown>
+                  <Link to={`${item.id}`} style={{ textDecoration: 'none' }}>
+                    <Menu.Item icon={<IconPencil size={16} />}>
+                      Edit Details
+                    </Menu.Item>
+                  </Link>
+                  <Menu.Item icon={<IconMessages size={16} />}>
+                    Send message
+                  </Menu.Item>
+                  <Menu.Item icon={<IconFiles size={16} />}>
+                    View Documents
+                  </Menu.Item>
+                  <Menu.Item icon={<IconUser size={16} />}>
+                    Edit Profile
+                  </Menu.Item>
 
-              <Menu.Item icon={<IconUserCheck size={16} />}>
-                Begin Corrective Action
-              </Menu.Item>
-              <Menu.Item icon={<IconUserX size={16} />} color="red">
-                Begin Resignation/Termination
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </Group>
-      </td>
-    </tr>
-  ));
+                  <Menu.Divider />
+
+                  <Menu.Item icon={<IconUserCheck size={16} />}>
+                    Begin Corrective Action
+                  </Menu.Item>
+                  <Menu.Item icon={<IconUserX size={16} />} color="red">
+                    Begin Resignation/Termination
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            </Group>
+          </td>
+        </tr>
+      ));
 
   return (
     <Container fluid px={48} py="xl">
@@ -229,10 +229,11 @@ function DashboardStaff() {
 
       <Container size="lg" mt="xl">
         <Title order={2}>Staff List</Title>
-        {loading ? (
-          <Center mt="xl">
+        {isLoading ? (
+          <Stack mt="xl" align="center">
             <Loader />
-          </Center>
+            <Text>Loading...</Text>
+          </Stack>
         ) : (
           <Table sx={{ minWidth: 800 }} verticalSpacing="md">
             <tbody>{Rows}</tbody>

@@ -1,8 +1,7 @@
-import { useEffect } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { Paper, createStyles, AppShell } from '@mantine/core';
 import MainNav, { navbarWidth } from '@components/MainNav/MainNav';
-import useAuthUser from '@hooks/useAuthUser';
+import useAuth from '@hooks/useAuth';
 
 const useStyles = createStyles(_theme => {
   return {
@@ -16,16 +15,12 @@ const useStyles = createStyles(_theme => {
 
 function Dashboard() {
   const { classes } = useStyles();
-  const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
-  const user = useAuthUser();
+  if (!user) return <Navigate to="/login" replace />;
 
-  useEffect(() => {
-    if (!user) navigate('/login', { replace: true });
-
-    if (location.pathname === '/dashboard') navigate('home');
-  }, [location.pathname, navigate, user]);
+  if (location.pathname === '/dashboard') return <Navigate to="home" replace />;
 
   return (
     <AppShell
