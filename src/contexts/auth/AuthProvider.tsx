@@ -2,14 +2,15 @@ import AuthContext from '.';
 import { PropsWithChildren, useCallback, useEffect, useState } from 'react';
 import { IResponse } from '@app-types/api';
 import { IAuthenticatedUser } from '@app-types/auth';
-import { authStorageKey } from '@utils/constants';
+import { AUTH_STORAGE_KEY } from '@utils/constants';
 import { showNotification } from '@mantine/notifications';
 import { IconCheck, IconX } from '@tabler/icons';
 import axiosClient from '@lib/axios';
 import { Button, Group, Modal, Text, ThemeIcon, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
+import { useQueryClient } from '@tanstack/react-query';
 
-const storedUserStr = localStorage.getItem(authStorageKey);
+const storedUserStr = localStorage.getItem(AUTH_STORAGE_KEY);
 const storedUser: IAuthenticatedUser | null = storedUserStr
   ? JSON.parse(storedUserStr)
   : null;
@@ -18,10 +19,11 @@ function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<IAuthenticatedUser | null>(storedUser);
   const [tokenExpired, setTokenExpired] = useState(false);
   const [opened, handlers] = useDisclosure(false);
+  const queryClient = useQueryClient();
 
   const removeUser = useCallback(() => {
     setUser(null);
-    localStorage.removeItem(authStorageKey);
+    localStorage.removeItem(AUTH_STORAGE_KEY);
   }, [setUser]);
 
   const login = useCallback(
@@ -38,7 +40,7 @@ function AuthProvider({ children }: PropsWithChildren) {
         setTokenExpired(false);
 
         localStorage.setItem(
-          authStorageKey,
+          AUTH_STORAGE_KEY,
           JSON.stringify(response.data.data)
         );
       } catch (error: any) {
@@ -69,7 +71,8 @@ function AuthProvider({ children }: PropsWithChildren) {
     });
 
     removeUser();
-  }, [removeUser, user?.token]);
+    queryClient.clear();
+  }, [queryClient, removeUser, user?.token]);
 
   useEffect(() => {
     if (tokenExpired) handlers.open();

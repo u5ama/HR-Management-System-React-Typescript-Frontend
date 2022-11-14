@@ -8,16 +8,15 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconPencil } from '@tabler/icons';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import Note from './Note';
 import NoteModal from './NoteModal';
-interface Props {
-  staffId: string;
-}
 
-function NotesTab({ staffId }: Props) {
+function NotesTab() {
   const authHeader = useAuthHeader();
   const [selectedNote, setSelectedNote] = useState<IStaffNote>();
   const [mode, setMode] = useState<ModalMode>();
+  const { id: staffId } = useParams();
 
   const [opened, handlers] = useDisclosure(false);
 

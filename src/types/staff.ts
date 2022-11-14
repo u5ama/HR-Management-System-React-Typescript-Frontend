@@ -35,3 +35,9 @@ export interface IStaffContact extends IApiObject {
   relationship: string;
   phone_number: string;
 }
+
+export interface IStaffDocument extends IApiObject {
+  document_title: string;
+  staff_id: number;
+  document_file: string;
+}

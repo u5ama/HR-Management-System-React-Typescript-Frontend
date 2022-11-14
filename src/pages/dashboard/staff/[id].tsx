@@ -22,7 +22,6 @@ import {
   IconNotes,
   IconUserCircle,
   IconSearch,
-  IconFilePlus,
   IconX,
 } from '@tabler/icons';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
@@ -34,6 +33,7 @@ import { IResponse } from '@app-types/api';
 import { Staff } from '@app-types/staff';
 import { showNotification } from '@mantine/notifications';
 import SettingsTab from '@components/SettingsTab/SettingsTab';
+import FolderTab from '@components/FolderTab/FolderTab';
 
 function DashboardEmployee() {
   const navigate = useNavigate();
@@ -170,23 +170,11 @@ function DashboardEmployee() {
                 </Tabs.Panel>
 
                 <Tabs.Panel value="folder" pt="xl">
-                  <Stack mt={32} align="center">
-                    <Title order={3} size="h2">
-                      No Files Yet
-                    </Title>
-
-                    <Button
-                      leftIcon={<IconFilePlus />}
-                      size="md"
-                      variant="light"
-                    >
-                      Add File
-                    </Button>
-                  </Stack>
+                  <FolderTab />
                 </Tabs.Panel>
 
                 <Tabs.Panel value="notes" pt="xl">
-                  <NotesTab staffId={id!} />
+                  <NotesTab />
                 </Tabs.Panel>
 
                 <Tabs.Panel value="profile" pt="xl">

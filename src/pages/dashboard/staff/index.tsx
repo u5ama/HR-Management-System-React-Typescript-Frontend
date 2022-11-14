@@ -40,7 +40,7 @@ function DashboardStaff() {
   const { user } = useAuth()!;
   const authHeader = useAuthHeader();
 
-  const { isLoading, error, data, isSuccess } = useQuery(
+  const { isLoading, data, isSuccess } = useQuery(
     ['staff', user?.id],
     async () => {
       const response = await axiosClient.get<IResponse<Staff[]>>(
@@ -49,17 +49,18 @@ function DashboardStaff() {
       );
 
       return response.data;
+    },
+    {
+      onError(error: any) {
+        showNotification({
+          title: 'Oops!',
+          message: error.response?.data?.message || 'Something went wrong',
+          icon: <IconX size={18} />,
+          color: 'red',
+        });
+      },
     }
   );
-
-  if (error) {
-    showNotification({
-      title: 'Oops!',
-      message: 'Something went wrong',
-      icon: <IconX size={18} />,
-      color: 'red',
-    });
-  }
 
   const Rows = !isSuccess
     ? null
