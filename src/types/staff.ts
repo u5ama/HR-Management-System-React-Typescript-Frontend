@@ -41,3 +41,8 @@ export interface IStaffDocument extends IApiObject {
   staff_id: number;
   document_file: string;
 }
+
+export interface IStaffRole extends IApiObject {
+  role_name: string;
+  company_id: number;
+}

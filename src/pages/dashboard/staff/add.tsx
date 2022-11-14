@@ -1,3 +1,5 @@
+import { useStaffRoles } from '@api/staff/roles';
+import StaffRolesManagerModal from '@components/StaffRolesManager/StaffRolesManager';
 import useAuth, { useAuthHeader } from '@hooks/useAuth';
 import axiosClient from '@lib/axios';
 import {
@@ -20,6 +22,7 @@ import {
 } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import { useForm, zodResolver } from '@mantine/form';
+import { useDisclosure } from '@mantine/hooks';
 import { showNotification } from '@mantine/notifications';
 import {
   IconUserPlus,
@@ -37,6 +40,16 @@ function DashboardAddStaff() {
   const { user } = useAuth();
   const authHeader = useAuthHeader();
   const queryClient = useQueryClient();
+  const staffRolesQuery = useStaffRoles(user!.id);
+
+  const staffRoleSelectData = staffRolesQuery.isSuccess
+    ? staffRolesQuery.data.data!.map(r => ({
+        value: r.id.toString(),
+        label: r.role_name,
+      }))
+    : [];
+
+  const [opened, handlers] = useDisclosure(false);
 
   const formSchema = z.object({
     company_id: z.number(),
@@ -126,6 +139,8 @@ function DashboardAddStaff() {
 
   return (
     <Container fluid px={48} py="xl" pb="96px">
+      <StaffRolesManagerModal opened={opened} onClose={handlers.close} />
+
       <Anchor component="span">
         <Link to="../staff">
           <Button leftIcon={<IconArrowLeft />} variant="subtle">
@@ -335,12 +350,17 @@ function DashboardAddStaff() {
               <Grid.Col span={7}>
                 <Select
                   label="Primary Role"
-                  placeholder="Add Roles"
-                  // withAsterisk
+                  placeholder="Select Role"
+                  withAsterisk
                   searchable
                   nothingFound="No options"
-                  data={['Designer', 'Manager', 'Worker']}
+                  data={staffRoleSelectData}
+                  disabled={staffRolesQuery.isLoading}
                 />
+
+                <Button variant="subtle" onClick={handlers.open} mt="xs">
+                  Manage Roles
+                </Button>
               </Grid.Col>
 
               <Grid.Col span={5}>
