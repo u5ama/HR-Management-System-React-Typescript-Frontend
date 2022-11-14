@@ -32,15 +32,27 @@ import {
   IconX,
 } from '@tabler/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import dayjs from 'dayjs';
+import { useCallback, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
+
+function joinAddress(line1: string, line2: string) {
+  let address = '';
+
+  if (line1) address += line1;
+  if (line2) address += ` [-] ${line2}`;
+
+  return address;
+}
 
 function DashboardAddStaff() {
   const { user } = useAuth();
   const authHeader = useAuthHeader();
   const queryClient = useQueryClient();
   const staffRolesQuery = useStaffRoles(user!.id);
+  const [showFormError, setShowFormError] = useState(false);
+  const navigate = useNavigate();
 
   const staffRoleSelectData = staffRolesQuery.isSuccess
     ? staffRolesQuery.data.data!.map(r => ({
@@ -51,8 +63,7 @@ function DashboardAddStaff() {
 
   const [opened, handlers] = useDisclosure(false);
 
-  const formSchema = z.object({
-    company_id: z.number(),
+  const staffFormSchema = z.object({
     first_name: z.string().min(2, { message: 'Enter at least 2 characters' }),
     last_name: z.string().min(2, { message: 'Enter at least 2 characters' }),
     email: z.string().email({ message: 'Invalid Email' }),
@@ -60,20 +71,23 @@ function DashboardAddStaff() {
       .string()
       .min(8, { message: 'Password should be at least 8 characters long' }),
     phone_number: z.string().min(1, { message: 'Provide a Phone Number' }),
-    // last_4_of_SNN: z.string(),
+    last_4_of_SNN: z.string().optional(),
     type_of_worker: z.enum(['employee', 'contractor']),
     type_of_employee: z.enum(['full_time', 'part_time']),
     type_of_contractor: z.enum(['individual', 'business']),
     business_name: z.string().optional(),
-    start_date: z.string().optional(),
+    start_date: z
+      .date({ invalid_type_error: 'Please provide a starting date' })
+      .optional(),
     state_working_in: z.string().optional(),
     pay_rate_type: z.enum(['per_hour', 'salary']),
     pay_rate_amount: z.number().min(0),
-    date_of_birth: z.string().optional(),
+    date_of_birth: z.date().or(z.string()).optional(),
     home_address: z.string().optional(),
     city: z.string().optional(),
     state: z.string().optional(),
     zip_code: z.string().optional(),
+    assigned_role_id: z.string().length(1, { message: 'Please select a role' }),
   });
 
   const form = useForm({
@@ -93,12 +107,20 @@ function DashboardAddStaff() {
       pay_rate_type: 'per_hour',
       pay_rate_amount: 0,
       date_of_birth: '',
-      home_address: '',
+      address1: '',
+      address2: '',
       city: '',
       state: '',
       zip_code: '',
+      assigned_role_id: '',
     },
-    validate: zodResolver(formSchema),
+    transformValues: values => ({
+      ...values,
+      date_of_birth: dayjs(values.date_of_birth).format('YYYY-MM-DD'),
+      start_date: dayjs(values.start_date).format('YYYY-MM-DD'),
+      home_address: joinAddress(values.address1, values.address2),
+    }),
+    validate: zodResolver(staffFormSchema),
   });
 
   const staffMutation = useMutation(
@@ -115,6 +137,8 @@ function DashboardAddStaff() {
           icon: <IconCheck size={18} />,
           color: 'teal',
         });
+
+        navigate('../staff');
       },
       onError() {
         showNotification({
@@ -132,6 +156,8 @@ function DashboardAddStaff() {
 
   const formSubmitHandler = useCallback(
     async (values: typeof form.values) => {
+      setShowFormError(false);
+
       staffMutation.mutate(values);
     },
     [form, staffMutation]
@@ -152,6 +178,7 @@ function DashboardAddStaff() {
       <Container mt="xl">
         <form
           onSubmit={form.onSubmit(formSubmitHandler, (errors, values) => {
+            setShowFormError(true);
             console.log(errors);
             console.log(values);
           })}
@@ -227,6 +254,7 @@ function DashboardAddStaff() {
                   label="Date of Birth (optional)"
                   inputFormat="MM-DD-YY"
                   labelFormat="MM/YYYY"
+                  {...form.getInputProps('date_of_birth')}
                 />
               </Grid.Col>
 
@@ -234,6 +262,7 @@ function DashboardAddStaff() {
                 <TextInput
                   label="Home Address (optional)"
                   placeholder="132, My Street, Kingston, New York 12401"
+                  {...form.getInputProps('address1')}
                 />
               </Grid.Col>
 
@@ -241,6 +270,7 @@ function DashboardAddStaff() {
                 <TextInput
                   label="Home Address Line 2 (optional)"
                   placeholder="132, My Street, Kingston, New York 12401"
+                  {...form.getInputProps('address2')}
                 />
               </Grid.Col>
 
@@ -332,7 +362,8 @@ function DashboardAddStaff() {
                   placeholder="Pick a date"
                   inputFormat="MM/DD/YYYY"
                   labelFormat="MM/YYYY"
-                  // withAsterisk
+                  {...form.getInputProps('start_date')}
+                  withAsterisk
                 />
               </Grid.Col>
 
@@ -356,6 +387,7 @@ function DashboardAddStaff() {
                   nothingFound="No options"
                   data={staffRoleSelectData}
                   disabled={staffRolesQuery.isLoading}
+                  {...form.getInputProps('assigned_role_id')}
                 />
 
                 <Button variant="subtle" onClick={handlers.open} mt="xs">
@@ -391,7 +423,7 @@ function DashboardAddStaff() {
           </Box>
 
           <Stack mt="lg" spacing="xs">
-            {form.isTouched() && !form.isValid() && (
+            {showFormError && (
               <Text color="red">
                 Please fix the issues above and try again.
               </Text>
