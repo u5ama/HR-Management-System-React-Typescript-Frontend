@@ -4,7 +4,7 @@ import LoginPage from '@pages/login';
 import Dashboard from '@pages/dashboard';
 import DashboardHome from '@pages/dashboard/home';
 import DashboardStaff from '@pages/dashboard/staff';
-import DashboardAddStaff from '@pages/dashboard/staff/add';
+import DashboardStaffForm from '@pages/dashboard/staff/form';
 import DashboardEmployee from '@pages/dashboard/staff/[id]';
 
 function App() {
@@ -16,7 +16,8 @@ function App() {
         <Route path="home" element={<DashboardHome />} />
         <Route path="staff" element={<DashboardStaff />} />
         <Route path="staff/:id" element={<DashboardEmployee />} />
-        <Route path="staff/add" element={<DashboardAddStaff />} />
+        <Route path="staff/:id/edit" element={<DashboardStaffForm />} />
+        <Route path="staff/add" element={<DashboardStaffForm />} />
         <Route path="*" element={<NotFound />} />
       </Route>
 

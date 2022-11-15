@@ -1,6 +1,6 @@
 import { IApiObject } from './api';
 
-interface IStaff extends IApiObject {
+export interface IStaff extends IApiObject {
   first_name: string;
   last_name: string;
   email: string;
@@ -19,9 +19,9 @@ interface IStaff extends IApiObject {
   state_working_in: string;
   pay_rate_type: string;
   pay_rate_amount: string;
+  assigned_role: string;
+  assigned_role_id: number;
 }
-
-export type Staff = Partial<IStaff>;
 
 export interface IStaffNote extends IApiObject {
   note_type: 'Incident' | 'General Note';

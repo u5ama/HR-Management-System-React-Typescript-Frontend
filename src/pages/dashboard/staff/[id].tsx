@@ -22,43 +22,20 @@ import {
   IconNotes,
   IconUserCircle,
   IconSearch,
-  IconX,
 } from '@tabler/icons';
 import { Link, useNavigate, useLocation, useParams } from 'react-router-dom';
-import { useAuthHeader } from '@hooks/useAuth';
 import NotesTab from '@components/NotesTab/NotesTab';
-import axiosClient from '@lib/axios';
-import { useQuery } from '@tanstack/react-query';
-import { IResponse } from '@app-types/api';
-import { Staff } from '@app-types/staff';
-import { showNotification } from '@mantine/notifications';
 import SettingsTab from '@components/SettingsTab/SettingsTab';
 import FolderTab from '@components/FolderTab/FolderTab';
+import ProfileTab from '@components/ProfileTab/ProfileTab';
+import { useStaffOne } from '@api/staff/staff';
 
 function DashboardEmployee() {
   const navigate = useNavigate();
   const { tab } = qs.parse(useLocation().search.replace('?', ''));
   const { id } = useParams();
-  const authHeader = useAuthHeader();
 
-  const { isLoading, error, data } = useQuery(['staff', id], async () => {
-    const response = await axiosClient.post<IResponse<Staff>>(
-      '/company/showStaff',
-      { id },
-      { headers: authHeader }
-    );
-
-    return response.data;
-  });
-
-  if (error) {
-    showNotification({
-      title: 'Oops!',
-      message: 'Something went wrong',
-      icon: <IconX size={18} />,
-      color: 'red',
-    });
-  }
+  const { isLoading, data } = useStaffOne(parseInt(id!));
 
   return (
     <Container fluid px={48} py="xl" pb="96px">
@@ -178,11 +155,7 @@ function DashboardEmployee() {
                 </Tabs.Panel>
 
                 <Tabs.Panel value="profile" pt="xl">
-                  <Stack mt={32} align="center">
-                    <Title order={3} size="h2">
-                      User Profile
-                    </Title>
-                  </Stack>
+                  <ProfileTab staff={data?.data} />
                 </Tabs.Panel>
 
                 <Tabs.Panel value="settings" pt="xl">

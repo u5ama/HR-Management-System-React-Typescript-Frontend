@@ -31,19 +31,20 @@ import {
   IconUsers,
   IconX,
 } from '@tabler/icons';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { IResponse } from '@app-types/api';
-import { Staff } from '@app-types/staff';
+import { IStaff } from '@app-types/staff';
 import { showNotification } from '@mantine/notifications';
 
 function DashboardStaff() {
   const { user } = useAuth()!;
   const authHeader = useAuthHeader();
+  const navigate = useNavigate();
 
   const { isLoading, data, isSuccess } = useQuery(
-    ['staff', user?.id],
+    ['company_staff', user?.id],
     async () => {
-      const response = await axiosClient.get<IResponse<Staff[]>>(
+      const response = await axiosClient.get<IResponse<IStaff[]>>(
         `/company/staff?company_id=${user?.id}`,
         { headers: authHeader }
       );
@@ -120,18 +121,26 @@ function DashboardStaff() {
                 </Menu.Target>
 
                 <Menu.Dropdown>
-                  <Link to={`${item.id}`} style={{ textDecoration: 'none' }}>
-                    <Menu.Item icon={<IconPencil size={16} />}>
-                      Edit Details
-                    </Menu.Item>
-                  </Link>
+                  <Menu.Item
+                    icon={<IconPencil size={16} />}
+                    onClick={() => navigate(`${item.id}`)}
+                  >
+                    Edit Details
+                  </Menu.Item>
+
                   <Menu.Item icon={<IconMessages size={16} />}>
                     Send message
                   </Menu.Item>
-                  <Menu.Item icon={<IconFiles size={16} />}>
+                  <Menu.Item
+                    icon={<IconFiles size={16} />}
+                    onClick={() => navigate(`${item.id}?tab=folder`)}
+                  >
                     View Documents
                   </Menu.Item>
-                  <Menu.Item icon={<IconUser size={16} />}>
+                  <Menu.Item
+                    icon={<IconUser size={16} />}
+                    onClick={() => navigate(`${item.id}?tab=profile`)}
+                  >
                     Edit Profile
                   </Menu.Item>
 

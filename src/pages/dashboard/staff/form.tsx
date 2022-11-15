@@ -1,4 +1,7 @@
 import { useStaffRoles } from '@api/staff/roles';
+import { useStaffOne } from '@api/staff/staff';
+import { IResponse } from '@app-types/api';
+import { IStaff } from '@app-types/staff';
 import StaffRolesManagerModal from '@components/StaffRolesManager/StaffRolesManager';
 import useAuth, { useAuthHeader } from '@hooks/useAuth';
 import axiosClient from '@lib/axios';
@@ -19,6 +22,8 @@ import {
   PasswordInput,
   Stack,
   NumberInput,
+  Group,
+  Loader,
 } from '@mantine/core';
 import { DatePicker } from '@mantine/dates';
 import { useForm, zodResolver } from '@mantine/form';
@@ -33,26 +38,21 @@ import {
 } from '@tabler/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { useCallback, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { z } from 'zod';
 
-function joinAddress(line1: string, line2: string) {
-  let address = '';
-
-  if (line1) address += line1;
-  if (line2) address += ` [-] ${line2}`;
-
-  return address;
-}
-
-function DashboardAddStaff() {
+function DashboardStaffForm() {
   const { user } = useAuth();
   const authHeader = useAuthHeader();
   const queryClient = useQueryClient();
   const staffRolesQuery = useStaffRoles(user!.id);
   const [showFormError, setShowFormError] = useState(false);
   const navigate = useNavigate();
+
+  const { id: staffId } = useParams();
+  const isEditing = !!staffId;
+  const { isLoading, data } = useStaffOne(parseInt(staffId!));
 
   const staffRoleSelectData = staffRolesQuery.isSuccess
     ? staffRolesQuery.data.data!.map(r => ({
@@ -67,9 +67,11 @@ function DashboardAddStaff() {
     first_name: z.string().min(2, { message: 'Enter at least 2 characters' }),
     last_name: z.string().min(2, { message: 'Enter at least 2 characters' }),
     email: z.string().email({ message: 'Invalid Email' }),
-    password: z
-      .string()
-      .min(8, { message: 'Password should be at least 8 characters long' }),
+    password: isEditing
+      ? z.string().optional()
+      : z
+          .string()
+          .min(8, { message: 'Password should be at least 8 characters long' }),
     phone_number: z.string().min(1, { message: 'Provide a Phone Number' }),
     last_4_of_SNN: z.string().optional(),
     type_of_worker: z.enum(['employee', 'contractor']),
@@ -107,8 +109,7 @@ function DashboardAddStaff() {
       pay_rate_type: 'per_hour',
       pay_rate_amount: 0,
       date_of_birth: '',
-      address1: '',
-      address2: '',
+      home_address: '',
       city: '',
       state: '',
       zip_code: '',
@@ -118,32 +119,80 @@ function DashboardAddStaff() {
       ...values,
       date_of_birth: dayjs(values.date_of_birth).format('YYYY-MM-DD'),
       start_date: dayjs(values.start_date).format('YYYY-MM-DD'),
-      home_address: joinAddress(values.address1, values.address2),
     }),
     validate: zodResolver(staffFormSchema),
   });
 
+  useEffect(() => {
+    if (data?.data) {
+      const staff = data.data as IStaff;
+
+      for (const key in staff) {
+        if (Object.prototype.hasOwnProperty.call(staff, key)) {
+          // @ts-ignore
+          staff[key] = staff[key] || '';
+        }
+      }
+
+      form.setValues({
+        ...data?.data!,
+        start_date: (data?.data?.start_date
+          ? new Date(data.data.start_date!)
+          : '') as string,
+        date_of_birth: (data?.data?.date_of_birth
+          ? new Date(data.data.date_of_birth!)
+          : '') as string,
+        pay_rate_amount: data?.data
+          ? parseFloat(data.data.pay_rate_amount!)
+          : 0,
+        assigned_role_id: data?.data?.assigned_role_id?.toString(),
+      });
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
   const staffMutation = useMutation(
     async (values: typeof form.values) => {
-      await axiosClient.post('/company/staff', values, { headers: authHeader });
+      if (isEditing)
+        return await axiosClient.post<IResponse<IStaff>>(
+          `/company/staff/${staffId}`,
+          values,
+          {
+            headers: authHeader,
+          }
+        );
+      else
+        return await axiosClient.post<IResponse<IStaff>>(
+          '/company/staff',
+          values,
+          {
+            headers: authHeader,
+          }
+        );
     },
     {
-      onSuccess() {
+      onSuccess(response) {
+        if (!response.data.success) throw response.data.message;
+
         form.reset();
 
         showNotification({
           title: 'Success',
-          message: 'Staff successfully added',
+          message: 'Staff saved successfully',
           icon: <IconCheck size={18} />,
           color: 'teal',
         });
 
-        navigate('../staff');
+        if (data)
+          isEditing
+            ? navigate(`../staff/${staffId}?tab=profile`)
+            : navigate('../staff');
       },
-      onError() {
+      onError(err) {
         showNotification({
           title: 'Oops!',
-          message: 'Something went wrong',
+          message: typeof err === 'string' ? err : 'Something went wrong',
           icon: <IconX size={18} />,
           color: 'red',
         });
@@ -158,6 +207,8 @@ function DashboardAddStaff() {
     async (values: typeof form.values) => {
       setShowFormError(false);
 
+      console.log(values);
+
       staffMutation.mutate(values);
     },
     [form, staffMutation]
@@ -168,9 +219,9 @@ function DashboardAddStaff() {
       <StaffRolesManagerModal opened={opened} onClose={handlers.close} />
 
       <Anchor component="span">
-        <Link to="../staff">
+        <Link to={isEditing ? `../staff/${staffId}?tab=profile` : '../staff'}>
           <Button leftIcon={<IconArrowLeft />} variant="subtle">
-            Back to all Staff
+            {isEditing ? 'Back to Profile' : 'Back to all Staff'}
           </Button>
         </Link>
       </Anchor>
@@ -183,7 +234,17 @@ function DashboardAddStaff() {
             console.log(values);
           })}
         >
-          <Title>Add Staff</Title>
+          {isEditing ? (
+            <Group>
+              <Title>
+                Edit {data?.data?.first_name} {data?.data?.last_name}
+              </Title>
+              {isLoading && <Loader />}
+            </Group>
+          ) : (
+            <Title>Add Staff</Title>
+          )}
+
           <Text>All fields are required unless specified as optional.</Text>
 
           <Box
@@ -232,13 +293,15 @@ function DashboardAddStaff() {
                 />
               </Grid.Col>
 
-              <Grid.Col span={6}>
-                <PasswordInput
-                  label="Password"
-                  placeholder="Staff password"
-                  {...form.getInputProps('password')}
-                />
-              </Grid.Col>
+              {!isEditing && (
+                <Grid.Col span={6}>
+                  <PasswordInput
+                    label="Password"
+                    placeholder="Staff password"
+                    {...form.getInputProps('password')}
+                  />
+                </Grid.Col>
+              )}
             </Grid>
 
             <Divider my="xl" />
@@ -262,15 +325,7 @@ function DashboardAddStaff() {
                 <TextInput
                   label="Home Address (optional)"
                   placeholder="132, My Street, Kingston, New York 12401"
-                  {...form.getInputProps('address1')}
-                />
-              </Grid.Col>
-
-              <Grid.Col span={12}>
-                <TextInput
-                  label="Home Address Line 2 (optional)"
-                  placeholder="132, My Street, Kingston, New York 12401"
-                  {...form.getInputProps('address2')}
+                  {...form.getInputProps('home_address')}
                 />
               </Grid.Col>
 
@@ -436,7 +491,7 @@ function DashboardAddStaff() {
                 type="submit"
                 loading={staffMutation.isLoading}
               >
-                Add Staff
+                {isEditing ? 'Update Staff' : 'Add Staff'}
               </Button>
             </Center>
           </Stack>
@@ -446,4 +501,4 @@ function DashboardAddStaff() {
   );
 }
 
-export default DashboardAddStaff;
+export default DashboardStaffForm;
