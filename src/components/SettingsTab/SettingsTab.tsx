@@ -43,11 +43,12 @@ function SettingsTab() {
     },
     {
       onSuccess(data) {
-        form.setValues({
-          name: data.data?.name,
-          relationship: data?.data?.relationship,
-          phone_number: data?.data?.phone_number,
-        });
+        if (data.success)
+          form.setValues({
+            name: data.data?.name,
+            relationship: data?.data?.relationship,
+            phone_number: data?.data?.phone_number,
+          });
       },
     }
   );
