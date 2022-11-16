@@ -12,12 +12,14 @@ import { AuthProvider } from '@contexts/auth';
 
 const queryClient = new QueryClient();
 
+const routerBaseName = import.meta.env.VITE_SUB_DIR_PATH || '';
+
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme} withGlobalStyles withNormalizeCSS>
         <NotificationsProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={routerBaseName}>
             <AuthProvider>
               <AxiosInterceptorsProvider>
                 <App />
