@@ -35,11 +35,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { IResponse } from '@app-types/api';
 import { IStaff } from '@app-types/staff';
 import { showNotification } from '@mantine/notifications';
+import { useDisclosure } from '@mantine/hooks';
+import SendMessageModal from '@components/SendMessageModal/SendMessageModal';
+import { useCallback, useState } from 'react';
 
 function DashboardStaff() {
   const { user } = useAuth()!;
   const authHeader = useAuthHeader();
   const navigate = useNavigate();
+  const [messageModalOpen, messageModalHandlers] = useDisclosure(false);
+  const [messageReceiverName, setMessageReceiverName] = useState('');
 
   const { isLoading, data, isSuccess } = useQuery(
     ['company_staff', user?.id],
@@ -61,6 +66,14 @@ function DashboardStaff() {
         });
       },
     }
+  );
+
+  const openMessageModalHandler = useCallback(
+    (name: string) => {
+      setMessageReceiverName(name);
+      messageModalHandlers.open();
+    },
+    [messageModalHandlers]
   );
 
   const Rows = !isSuccess
@@ -106,7 +119,12 @@ function DashboardStaff() {
           <td>
             <Group spacing="sm" position="right">
               <Tooltip label="Message Staff" position="left" withArrow>
-                <ActionIcon>
+                <ActionIcon
+                  onClick={() =>
+                    openMessageModalHandler(`${item.first_name}
+                  ${item.last_name}`)
+                  }
+                >
                   <IconMessage size={24} stroke={1.5} />
                 </ActionIcon>
               </Tooltip>
@@ -128,7 +146,13 @@ function DashboardStaff() {
                     Edit Details
                   </Menu.Item>
 
-                  <Menu.Item icon={<IconMessages size={16} />}>
+                  <Menu.Item
+                    icon={<IconMessages size={16} />}
+                    onClick={() =>
+                      openMessageModalHandler(`${item.first_name}
+                  ${item.last_name}`)
+                    }
+                  >
                     Send message
                   </Menu.Item>
                   <Menu.Item
@@ -162,6 +186,12 @@ function DashboardStaff() {
   return (
     <Container fluid px={48} py="xl">
       <Title>Staff</Title>
+
+      <SendMessageModal
+        receiverName={messageReceiverName}
+        opened={messageModalOpen}
+        onClose={() => messageModalHandlers.close()}
+      />
 
       <Container size="lg">
         <Group spacing="sm">
